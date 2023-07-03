@@ -11,14 +11,6 @@ import StoreKit
 public class inAppPurchasePlugin: CAPPlugin {
     private let implementation = inAppPurchase()
     private var storeKit = StoreKitManager()
-    
-    static var plugin: inAppPurchasePlugin? = nil
-    
-    override init() {
-        print("hi")
-        super.init()
-        inAppPurchasePlugin.plugin = self
-    }
 
     @objc func echo(_ call: CAPPluginCall) {
         let value = call.getString("value") ?? ""
@@ -28,18 +20,54 @@ public class inAppPurchasePlugin: CAPPlugin {
     }
     
     @objc func list(_ call: CAPPluginCall) {
-        call.resolve([
-            "products": storeKit.productDict
-        ])
+        var list: [IonicStoreProduct] = []
+        storeKit.storeProducts.forEach() {
+            product in
+           
+                list.append(IonicStoreProduct(name: product.displayName, description: product.description, price: product.displayPrice))
+            
+        }
+        do {
+            call.resolve([
+                "products": String(data: try JSONEncoder().encode(list), encoding: .utf8)!
+            ])
+        }catch {
+            call.resolve([
+                "error":true
+            ])
+        }
     }
     
     @objc func purchase(_ call: CAPPluginCall) {
-        let product: Product = storeKit.storeProducts.first { product in
+        let product: Product? = storeKit.storeProducts.first { product in
             return product.id == call.getString("id")
-        }!
-        print(product)
+        }
+        guard product != nil else {
+            self.notifyListeners("purchase", data: ["response" : ["error": "product not found", "id": call.getString("id")]])
+            return
+        }
         Task {
-            try await product.purchase()
+            do {
+                
+                let response = try await storeKit.purchase(product!)
+                guard response != nil else {
+                    let error = IonicTransactionError(productId: product!.id, error: "CANCELED OR PENDING")
+                    self.notifyListeners("purchase", data: ["response" : String(data: try JSONEncoder().encode(error), encoding: .utf8)!])
+                    return
+                }
+                let transaction = IonicTransaction(storefront: "DEU", quantity: 1, productId: response!.productID)
+                    
+                self.notifyListeners("purchase", data: ["response":  String(data: try JSONEncoder().encode(transaction), encoding: .utf8)!])
+            }catch {
+                switch error {
+                case StoreError.failedVerification:
+                    self.notifyListeners("purchase", data: ["response" : ["error":"purchase not verified", "id":call.getString("id")]])
+                    
+                default :
+                    self.notifyListeners("purchase", data: ["response" : ["error":"unknown error", "id":call.getString("id")]])
+                }
+            }
+            
         }
     }
     
@@ -93,6 +121,17 @@ public class inAppPurchasePlugin: CAPPlugin {
     }
 }
 
+struct IonicTransactionError : Codable {
+    let productId: String
+    let error: String
+}
+
+struct IonicTransaction : Codable {
+    let storefront: String
+    let quantity: Int
+    let productId: String
+}
+
 struct IonicStoreProduct : Codable {
     let name : String
     let description : String
@@ -113,6 +152,7 @@ class StoreKitManager: ObservableObject {
         if let plistPath = Bundle.main.path(forResource: "PropertyList", ofType: "plist"),
            let plist = FileManager.default.contents(atPath: plistPath) {
             productDict = (try? PropertyListSerialization.propertyList(from: plist, format: nil) as? [String : String]) ?? [:]
+
         } else {
             productDict = [:]
         }
@@ -137,8 +177,8 @@ class StoreKitManager: ObservableObject {
                     let transaction = try self.checkVerified(result)
                     await self.updateCustomerProductStatus()
                     await transaction.finish()
-                    print(result)
-                    inAppPurchasePlugin.plugin!.notifyListeners("purchase", data: ["testing":result])
+                    print("GOT NEW TRANSACTION")
+                    //inAppPurchasePlugin.plugin!.notifyListeners("purchase", data: ["testing":result])
                 } catch {
                     print("Transaction failed verification")
                 }
@@ -158,19 +198,18 @@ class StoreKitManager: ObservableObject {
     
     func purchase(_ product: Product) async throws -> Transaction? {
         let result = try await product.purchase()
-        print(result)
         switch result {
         case .success(let verificationResult):
             let transaction = try checkVerified(verificationResult)
             await updateCustomerProductStatus()
             await transaction.finish()
-            print(result)
-            inAppPurchasePlugin.plugin!.notifyListeners("purchase", data: ["testing" : result])
+            
+            //inAppPurchasePlugin.plugin!.notifyListeners("purchase", data: ["testing" : result])
             return transaction
                 
         case .userCancelled, .pending:
+            //inAppPurchasePlugin.plugin!.notifyListeners("purchase", data: ["testing" : result])
             print(result)
-            inAppPurchasePlugin.plugin!.notifyListeners("purchase", data: ["testing" : result])
             return nil
             
         default:
@@ -195,7 +234,6 @@ class StoreKitManager: ObservableObject {
                 let transaction = try checkVerified(result)
                 if let course = storeProducts.first(where: { $0.id == transaction.productID}) {
                     purchaedCourses.append(course)
-                    print(transaction)
                 }
             } catch {
                 print("Transaction failed verification")

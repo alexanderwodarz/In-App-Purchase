@@ -14,6 +14,12 @@ npx cap sync
 <docgen-index>
 
 * [`echo(...)`](#echo)
+* [`list(...)`](#list)
+* [`getStoreProducts()`](#getstoreproducts)
+* [`getPurchasedItems()`](#getpurchaseditems)
+* [`getProduct(...)`](#getproduct)
+* [`purchase(...)`](#purchase)
+* [Interfaces](#interfaces)
 
 </docgen-index>
 
@@ -33,5 +39,83 @@ echo(options: { value: string; }) => Promise<{ value: string; }>
 **Returns:** <code>Promise&lt;{ value: string; }&gt;</code>
 
 --------------------
+
+
+### list(...)
+
+```typescript
+list(options: { list: [registerProduct]; }) => Promise<{ value: boolean; }>
+```
+
+| Param         | Type                                      |
+| ------------- | ----------------------------------------- |
+| **`options`** | <code>{ list: [registerProduct]; }</code> |
+
+**Returns:** <code>Promise&lt;{ value: boolean; }&gt;</code>
+
+--------------------
+
+
+### getStoreProducts()
+
+```typescript
+getStoreProducts() => Promise<any>
+```
+
+**Returns:** <code>Promise&lt;any&gt;</code>
+
+--------------------
+
+
+### getPurchasedItems()
+
+```typescript
+getPurchasedItems() => Promise<any>
+```
+
+**Returns:** <code>Promise&lt;any&gt;</code>
+
+--------------------
+
+
+### getProduct(...)
+
+```typescript
+getProduct(options: { id: string; }) => Promise<{ value: string; }>
+```
+
+| Param         | Type                         |
+| ------------- | ---------------------------- |
+| **`options`** | <code>{ id: string; }</code> |
+
+**Returns:** <code>Promise&lt;{ value: string; }&gt;</code>
+
+--------------------
+
+
+### purchase(...)
+
+```typescript
+purchase(options: { id: string; }) => Promise<{ value: boolean; }>
+```
+
+| Param         | Type                         |
+| ------------- | ---------------------------- |
+| **`options`** | <code>{ id: string; }</code> |
+
+**Returns:** <code>Promise&lt;{ value: boolean; }&gt;</code>
+
+--------------------
+
+
+### Interfaces
+
+
+#### registerProduct
+
+| Prop            | Type                |
+| --------------- | ------------------- |
+| **`reference`** | <code>string</code> |
+| **`id`**        | <code>string</code> |
 
 </docgen-api>
