@@ -1,5 +1,5 @@
 {
-  "name": "capacitor-vue-ios-inapppurchase",
+  "name": "@alexanderwodarz/capacitor-ios-inapppurchase",
   "version": "0.0.1",
   "description": "Allows Capacitor Vue Apps to add in app purchases for iOS",
   "main": "dist/plugin.cjs.js",
@@ -35,7 +35,7 @@
     "prettier": "prettier \"**/*.{css,html,ts,js,java}\"",
     "swiftlint": "node-swiftlint",
     "docgen": "docgen --api inAppPurchasePlugin --output-readme README.md --output-json dist/docs.json",
-    "build": "npm run clean && npm run docgen && tsc && rollup -c rollup.config.js",
+    "build": "npm run clean && tsc && rollup -c rollup.config.js",
     "clean": "rimraf ./dist",
     "watch": "tsc --watch",
     "prepublishOnly": "npm run build"

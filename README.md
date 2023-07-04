@@ -1,13 +1,28 @@
-# capacitor-vue-ios-inapppurchase
+# @alexanderwodarz/capacitor-ios-inapppurchase
 
 Allows Capacitor Vue Apps to add in app purchases for iOS
 
 ## Install
 
 ```bash
-npm install capacitor-vue-ios-inapppurchase
+npm install @alexanderwodarz/capacitor-ios-inapppurchase
 npx cap sync
 ```
+
+## Preparations
+1. After installation open Xcode
+2. Click on Project Navigator > App
+3. Create a new "StoreKit Configuration File" file with name "Product"
+4. Create a new "Property List" file with name "PropertyList"
+5. Make sure that both files are directly in "App" located and not in any other directory
+6. Click in Project Navigator on Product and configure your products
+7. Click on PropertyList and map your Reference Name with your id
+8. Press CMD + Shift + , to open "scheme edit"
+9. Select left Run and Options
+10. Select "Product.storekit" in "StoreKit Configuration"
+
+## Notes
+Currently just tested with "Non-Consumable In-App Purchase"
 
 ## API
 
