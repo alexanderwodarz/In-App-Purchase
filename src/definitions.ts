@@ -1,5 +1,4 @@
 export interface inAppPurchasePlugin {
-  echo(options: { value: string }): Promise<{ value: string }>;
   list(options: {list: [registerProduct]}): Promise<{value: boolean}>;
   getStoreProducts(): Promise<any>;
   getPurchasedItems(): Promise<any>;
