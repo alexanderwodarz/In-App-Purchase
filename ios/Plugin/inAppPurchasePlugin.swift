@@ -24,7 +24,7 @@ public class inAppPurchasePlugin: CAPPlugin {
         storeKit.storeProducts.forEach() {
             product in
            
-                list.append(IonicStoreProduct(name: product.displayName, description: product.description, price: product.displayPrice))
+            list.append(IonicStoreProduct(name: product.id, description: product.displayName, price: product.description, id: product.displayPrice, purchased: false))
             
         }
         do {
@@ -44,26 +44,31 @@ public class inAppPurchasePlugin: CAPPlugin {
         }
         guard product != nil else {
             self.notifyListeners("purchase", data: ["response" : ["error": "product not found", "id": call.getString("id")]])
+            call.resolve([
+                "error": "product not found"
+            ])
             return
         }
         Task {
             do {
-                
                 let response = try await storeKit.purchase(product!)
                 guard response != nil else {
                     let error = IonicTransactionError(productId: product!.id, error: "CANCELED OR PENDING")
+                    call.resolve(["success": "CANCELED OR PENDING"])
                     self.notifyListeners("purchase", data: ["response" : String(data: try JSONEncoder().encode(error), encoding: .utf8)!])
                     return
                 }
                 let transaction = IonicTransaction(storefront: "DEU", quantity: 1, productId: response!.productID)
-                    
+                call.resolve(["success": "PURCHASED"])
                 self.notifyListeners("purchase", data: ["response":  String(data: try JSONEncoder().encode(transaction), encoding: .utf8)!])
             }catch {
                 switch error {
                 case StoreError.failedVerification:
+                    call.resolve(["error": "PURCHASE NOT VERIFIED"])
                     self.notifyListeners("purchase", data: ["response" : ["error":"purchase not verified", "id":call.getString("id")]])
                     
                 default :
+                    call.resolve(["error": "UNKNOWN ERROR"])
                     self.notifyListeners("purchase", data: ["response" : ["error":"unknown error", "id":call.getString("id")]])
                 }
             }
@@ -74,11 +79,9 @@ public class inAppPurchasePlugin: CAPPlugin {
     @objc func getPurchasedItems(_ call: CAPPluginCall){
         do {
             var list: [IonicStoreProduct] = []
-            storeKit.storeProducts.forEach() {
+            storeKit.purchasedCourses.forEach() {
                 product in
-                if((try? storeKit.isPurchased(product)) != nil){
-                    list.append(IonicStoreProduct(name: product.displayName, description: product.description, price: product.displayPrice))
-                }
+                list.append(IonicStoreProduct(name: product.displayName, description: product.description, price: product.displayPrice, id: product.id, purchased: true))
             }
             call.resolve([
                 "purchased": String(data: try JSONEncoder().encode(list), encoding: .utf8)!
@@ -94,7 +97,7 @@ public class inAppPurchasePlugin: CAPPlugin {
                 return product.id == call.getString("id")
             }!
             call.resolve([
-                "product": String(data: try JSONEncoder().encode(IonicStoreProduct(name: product.displayName, description: product.description, price: product.displayPrice)), encoding: .utf8)!
+                "product": String(data: try JSONEncoder().encode(IonicStoreProduct(name: product.displayName, description: product.description, price: product.displayPrice, id: product.id, purchased: storeKit.isPurchased(product))), encoding: .utf8)!
             ])
         } catch {
             call.resolve([
@@ -107,7 +110,12 @@ public class inAppPurchasePlugin: CAPPlugin {
         var list: [IonicStoreProduct] = []
         storeKit.storeProducts.forEach() {
             product in
-            list.append(IonicStoreProduct(name: product.displayName, description: product.description, price: product.displayPrice))
+            do {
+                
+                list.append(IonicStoreProduct(name: product.displayName, description: product.description, price: product.displayPrice, id: product.id, purchased: try storeKit.isPurchased(product)))
+            }catch {
+                
+            }
         }
         do {
             call.resolve([
@@ -136,6 +144,8 @@ struct IonicStoreProduct : Codable {
     let name : String
     let description : String
     let price : String
+    let id: String
+    let purchased: Bool
 }
 
 @available(iOS 15.0, *)
@@ -233,11 +243,13 @@ class StoreKitManager: ObservableObject {
             do {
                 let transaction = try checkVerified(result)
                 if let course = storeProducts.first(where: { $0.id == transaction.productID}) {
+                    print(transaction.productID)
                     purchaedCourses.append(course)
                 }
             } catch {
                 print("Transaction failed verification")
             }
+            print(purchaedCourses)
             self.purchasedCourses = purchaedCourses
         }
     }
