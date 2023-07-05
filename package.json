@@ -1,6 +1,6 @@
 {
   "name": "@alexanderwodarz/capacitor-ios-inapppurchase",
-  "version": "0.0.1",
+  "version": "0.0.7",
   "description": "Allows Capacitor Vue Apps to add in app purchases for iOS",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
@@ -9,7 +9,7 @@
   "files": [
     "dist/",
     "ios/Plugin/",
-    "CapacitorVueIosInapppurchase.podspec"
+    "AlexanderwodarzCapacitorIosInapppurchase.podspec"
   ],
   "author": "Alexander Wodarz",
   "license": "MIT",
